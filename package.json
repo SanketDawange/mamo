@@ -1,0 +1,24 @@
+{
+  "name": "mamo-technical-support-integration",
+  "version": "1.0.0",
+  "description": "Mamo Technical Support Specialist Take-Home: Inline Checkout, Subscriptions, and Webhook Receiver",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "simulate-webhooks": "node scripts/simulate-webhook.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "keywords": [
+    "mamopay",
+    "payment-gateway",
+    "inline-checkout",
+    "subscriptions",
+    "webhooks"
+  ],
+  "author": "Sanket",
+  "license": "ISC"
+}

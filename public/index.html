@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MamoPay — Technical Support Integration Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Mamo Inline Checkout Widget SDK -->
+  <script src="https://assets.mamopay.com/stable/checkout-inline-2.0.0.min.js"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-logo">M</div>
+        <div class="brand-text">
+          <h1>MamoPay <span>Integration Portal</span></h1>
+          <p class="subtitle">Technical Support Specialist Take-Home Exercise</p>
+        </div>
+      </div>
+      <div class="env-badge">
+        <span class="pulse-dot"></span>
+        <span>Sandbox Environment</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- Top Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-inline">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>1. Inline Payment Widget</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-subscription">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>2. Recurring Subscription Flow</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-webhooks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>3. Webhook Monitor &amp; Logger</span>
+        <span class="badge-counter" id="webhookCountBadge">0</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: Inline Payment Widget -->
+    <section id="tab-inline" class="tab-pane active">
+      <div class="grid-2col">
+        
+        <!-- Left: Checkout Configuration -->
+        <div class="card">
+          <div class="card-header">
+            <h3>One-Time Item Checkout</h3>
+            <span class="chip">link_type: inline</span>
+          </div>
+          <p class="card-desc">
+            Creates a one-time payment link and mounts Mamo's secure iframe widget directly into the DOM without external redirects.
+          </p>
+
+          <form id="inlinePaymentForm" class="form-grid">
+            <div class="form-group full-width">
+              <label for="itemTitle">Item Description</label>
+              <input type="text" id="itemTitle" value="Designer Ergonomic Desk Lamp" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="itemAmount">Amount (AED)</label>
+                <input type="number" id="itemAmount" value="75.00" step="1.00" min="1" required>
+              </div>
+              <div class="form-group">
+                <label for="currencySelect">Currency</label>
+                <input type="text" id="currencySelect" value="AED" readonly class="readonly-input">
+              </div>
+            </div>
+
+            <div class="divider-text">Customer Pre-fill Details</div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="custFirstName">First Name</label>
+                <input type="text" id="custFirstName" value="Sarah" required>
+              </div>
+              <div class="form-group">
+                <label for="custLastName">Last Name</label>
+                <input type="text" id="custLastName" value="Al-Hashimi" required>
+              </div>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="custEmail">Customer Email</label>
+              <input type="email" id="custEmail" value="sarah.h@example.com" required>
+            </div>
+
+            <button type="submit" id="btnLoadWidget" class="btn btn-primary full-width">
+              <span class="btn-text">Generate &amp; Embed Mamo Widget</span>
+              <span class="spinner" style="display:none;"></span>
+            </button>
+          </form>
+
+          <div class="sandbox-cards-helper">
+            <h4>Sandbox Test Cards</h4>
+            <div class="card-snippet">
+              <span class="tag tag-success">Success (no 3DS)</span>
+              <code>4659 1055 6905 1157</code> &bull; Exp: <code>01/28</code> &bull; CVV: <code>123</code>
+            </div>
+            <div class="card-snippet">
+              <span class="tag tag-info">Success (3DS)</span>
+              <code>4242 4242 4242 4242</code> &bull; Exp: <code>01/28</code> &bull; CVV: <code>123</code> &bull; Password: <code>Checkout1!</code>
+            </div>
+            <div class="card-snippet">
+              <span class="tag tag-danger">Decline</span>
+              <code>4567 3613 2598 1788</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Embedded Widget Target -->
+        <div class="card widget-display-card">
+          <div class="card-header">
+            <h3>Embedded Checkout Widget</h3>
+            <span id="widgetStatusBadge" class="status-indicator waiting">Waiting for link</span>
+          </div>
+
+          <div id="widgetContainer" class="widget-mount-area">
+            <div id="widgetPlaceholder" class="widget-empty-state">
+              <div class="empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              </div>
+              <h4>Widget Not Mounted</h4>
+              <p>Click "Generate &amp; Embed Mamo Widget" on the left. The secure Mamo payment element will load directly inside this container.</p>
+            </div>
+            <!-- Target DOM element required by Mamo Inline SDK -->
+            <div id="mamo-checkout-element"></div>
+          </div>
+
+          <div id="inlineLinkDetails" class="link-meta-box" style="display:none;">
+            <div class="meta-row">
+              <span class="meta-label">Payment URL:</span>
+              <a id="inlinePaymentUrlLink" href="#" target="_blank" class="meta-link"></a>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Link ID:</span>
+              <code id="inlineLinkIdCode"></code>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: Recurring Subscription Flow -->
+    <section id="tab-subscription" class="tab-pane">
+      <div class="grid-2col">
+        
+        <!-- Left: Subscription Plan Definition -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Recurring Subscription Plan</h3>
+            <span class="chip chip-purple">POST /links (subscriptions)</span>
+          </div>
+          <p class="card-desc">
+            Defines a recurring billing plan schedule via Mamo's subscriptions schema and generates a hosted checkout link.
+          </p>
+
+          <div class="plan-preview-box">
+            <div class="plan-header">
+              <div class="plan-title-group">
+                <span class="plan-badge">Most Popular</span>
+                <h4>Pro Plan</h4>
+                <p>Full technical suite for growing businesses</p>
+              </div>
+              <div class="plan-price">
+                <span class="currency">AED</span>
+                <span class="amount">49</span>
+                <span class="period">/ month</span>
+              </div>
+            </div>
+
+            <ul class="plan-features">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Automated recurring billing every 1 month</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Instant webhook lifecycle dispatches</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Customer billing portal &amp; receipt emails</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Visa, Mastercard, Apple Pay, &amp; Google Pay</li>
+            </ul>
+          </div>
+
+          <form id="subscriptionForm" class="form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subFrequency">Billing Frequency</label>
+                <input type="text" id="subFrequency" value="monthly" readonly class="readonly-input">
+              </div>
+              <div class="form-group">
+                <label for="subInterval">Interval</label>
+                <input type="number" id="subInterval" value="1" readonly class="readonly-input">
+              </div>
+            </div>
+
+            <button type="submit" id="btnCreateSubscription" class="btn btn-primary full-width">
+              <span class="btn-text">Generate Subscription Payment Link</span>
+              <span class="spinner" style="display:none;"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Generated Subscription Result -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Subscription Link &amp; Output</h3>
+            <span id="subStatusBadge" class="status-indicator waiting">Ready to generate</span>
+          </div>
+
+          <div id="subResultPlaceholder" class="widget-empty-state">
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <h4>No Subscription Link Generated Yet</h4>
+            <p>Click "Generate Subscription Payment Link" to submit the recurring definition to Mamo's Sandbox API.</p>
+          </div>
+
+          <div id="subResultContent" style="display:none;">
+            <div class="sub-action-card">
+              <h4>Subscription Payment Link Ready!</h4>
+              <p>Test customers can visit this hosted checkout page to enter their card and activate the recurring schedule.</p>
+              
+              <div class="link-display-row">
+                <input type="text" id="subPaymentUrlInput" readonly>
+                <button type="button" id="btnCopySubUrl" class="btn btn-outline">Copy</button>
+              </div>
+
+              <div class="btn-group-row">
+                <a id="subCheckoutLinkBtn" href="#" target="_blank" class="btn btn-success full-width">
+                  <span>Open Subscription Checkout</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="json-inspector">
+              <div class="json-inspector-header">
+                <span>Mamo API Response (Subscription Object)</span>
+                <span class="json-tag">HTTP 201 Created</span>
+              </div>
+              <pre id="subJsonResponse"><code></code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 3: Webhook Monitor & Logger -->
+    <section id="tab-webhooks" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Webhook Receiver &amp; Payload Inspector</h3>
+            <p class="card-desc" style="margin: 4px 0 0 0;">
+              Local listener endpoint: <code>http://localhost:3000/webhooks/mamo</code> &bull; Listening for: <code>charge.succeeded</code>, <code>charge.failed</code>, <code>subscription.succeeded</code>, <code>subscription.failed</code>
+            </p>
+          </div>
+          <div class="header-actions">
+            <button id="btnClearLogs" class="btn btn-sm btn-outline">Clear Logs</button>
+          </div>
+        </div>
+
+        <!-- Simulation Toolbar -->
+        <div class="simulation-toolbar">
+          <div class="toolbar-label">
+            <strong>Trigger Test Events:</strong>
+            <span>Send mock payloads directly into receiver</span>
+          </div>
+          <div class="toolbar-buttons">
+            <button class="btn btn-sm btn-event-charge-succ" data-sim="charge.succeeded">charge.succeeded</button>
+            <button class="btn btn-sm btn-event-charge-fail" data-sim="charge.failed">charge.failed</button>
+            <button class="btn btn-sm btn-event-sub-succ" data-sim="subscription.succeeded">subscription.succeeded</button>
+            <button class="btn btn-sm btn-event-sub-fail" data-sim="subscription.failed">subscription.failed</button>
+          </div>
+        </div>
+
+        <!-- Webhook Event Feed -->
+        <div class="feed-container">
+          <div id="webhookFeedEmpty" class="feed-empty-state">
+            <div class="empty-icon pulse">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <h4>Listening for Webhook Dispatches</h4>
+            <p>Any incoming webhook from Mamo Sandbox or local simulation will be parsed and logged here in real time.</p>
+          </div>
+
+          <div id="webhookFeedList" class="feed-list" style="display:none;"></div>
+        </div>
+
+        <!-- Webhook Integration Instructions -->
+        <div class="webhook-setup-guide">
+          <h4>Public Webhook Registration Guide (for production or ngrok tunnel)</h4>
+          <ol>
+            <li>Expose local port 3000 using your preferred tunnel: <code>npx ngrok http 3000</code></li>
+            <li>Register the public tunnel URL with Mamo via API or dashboard:
+              <code>POST /manage_api/v1/webhooks</code> with <code>{"url": "https://&lt;your-tunnel&gt;.ngrok.app/webhooks/mamo", "enabled_events": ["charge.succeeded", "charge.failed", "subscription.succeeded", "subscription.failed"]}</code>
+            </li>
+            <li>Mamo automatically verifies that the endpoint is reachable (HTTP 200) upon registration.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Mamo Technical Support Interview Assessment &bull; Built with Node.js, Express &amp; Vanilla JavaScript &bull; Candidate: Sanket</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
